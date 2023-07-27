@@ -20,16 +20,16 @@ public class EndpointHit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotNull
-    @Column(nullable = false)
+    @Column(name = "app", nullable = false)
     private String app;
     @NotNull
-    @Column(nullable = false)
+    @Column(name = "uri", nullable = false)
     private String uri;
     @NotNull
-    @Column(nullable = false)
+    @Column(name = "ip", nullable = false)
     private String ip;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Column(name = "datetime", nullable = false)
+    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
     @Override
