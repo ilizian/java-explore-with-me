@@ -24,9 +24,26 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
-  ewm-server:
+  ewm-service:
     ports:
       - "8080:8080"
-    build: ./ewm-service
-    image: ewm-main-service
-    container_name: ewm-main-service
+    build: ewm-service
+    image: ewm-service
+    container_name: ewm-service
+    depends_on:
+      - stats-server
+      - ewm-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm_db
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+
+  ewm-db:
+    image: postgres:15.1-alpine
+    container_name: ewm-db
+    ports:
+      - "6542:5432"
+    environment:
+      - POSTGRES_DB=ewm_db
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
