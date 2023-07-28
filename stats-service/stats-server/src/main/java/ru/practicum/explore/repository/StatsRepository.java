@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface StatsRepository extends JpaRepository<EndpointHit, Integer> {
 
+    /*
     @Query(value = "SELECT new ru.practicum.explore.model.ViewStats(" +
             "hit.app as app, hit.uri as uri, COUNT(hit.ip) as counter) " +
             "FROM EndpointHit hit " +
@@ -56,6 +57,33 @@ public interface StatsRepository extends JpaRepository<EndpointHit, Integer> {
             "GROUP BY hit.app, hit.uri " +
             "ORDER BY counter DESC")
     public List<ViewStats> findUniqueStats(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("uris") List<String> uris
+    );
+
+     */
+    @Query(value = "SELECT new ru.practicum.explore.model.ViewStats(" +
+            "hit.app as app, hit.uri as uri, COUNT(DISTINCT hit.ip) as counter) " +
+            "FROM EndpointHit hit " +
+            "WHERE hit.timestamp between :start AND :end " +
+            "AND (uri in ( :uris ) OR :uris IS Null) " +
+            "GROUP BY hit.app, hit.uri " +
+            "ORDER BY counter DESC")
+    public List<ViewStats> findUniqueStats(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("uris") List<String> uris
+    );
+
+    @Query(value = "SELECT new ru.practicum.explore.model.ViewStats(" +
+            "hit.app as app, hit.uri as uri, COUNT(hit.ip) as counter) " +
+            "FROM EndpointHit hit " +
+            "WHERE hit.timestamp between :start AND :end " +
+            "AND (uri in ( :uris ) OR :uris IS Null) " +
+            "GROUP BY hit.app, hit.uri " +
+            "ORDER BY counter DESC")
+    public List<ViewStats> findStats(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("uris") List<String> uris

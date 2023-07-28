@@ -36,14 +36,16 @@ public class StatsServiceImpl implements StatsService {
                 stats = statsRepository.findUniqueStats(start, end, uris);
                 return getStatsListDto(stats);
             }
-            stats = statsRepository.findUniqueStats(start, end);
+         //   stats = statsRepository.findUniqueStats(start, end);
+            stats = statsRepository.findUniqueStats(start, end, uris);
             return getStatsListDto(stats);
         } else {
             if (uris != null) {
                 stats = statsRepository.findStats(start, end, uris);
                 return getStatsListDto(stats);
             }
-            stats = statsRepository.findStats(start, end);
+          //  stats = statsRepository.findStats(start, end);
+            stats = statsRepository.findStats(start, end, uris);
             return getStatsListDto(stats);
         }
     }
