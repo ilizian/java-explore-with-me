@@ -32,22 +32,11 @@ public class StatsServiceImpl implements StatsService {
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         List<ViewStats> stats;
         if (unique) {
-            if (uris != null) {
-                stats = statsRepository.findUniqueStats(start, end, uris);
-                return getStatsListDto(stats);
-            }
-         //   stats = statsRepository.findUniqueStats(start, end);
             stats = statsRepository.findUniqueStats(start, end, uris);
-            return getStatsListDto(stats);
         } else {
-            if (uris != null) {
-                stats = statsRepository.findStats(start, end, uris);
-                return getStatsListDto(stats);
-            }
-          //  stats = statsRepository.findStats(start, end);
             stats = statsRepository.findStats(start, end, uris);
-            return getStatsListDto(stats);
         }
+        return getStatsListDto(stats);
     }
 
     private void validateEndpointHit(EndpointHitDto endpointHitDto) throws ValidationException {
