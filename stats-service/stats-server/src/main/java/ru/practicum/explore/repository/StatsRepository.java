@@ -20,7 +20,7 @@ public interface StatsRepository extends JpaRepository<EndpointHit, Integer> {
             "AND (uri in ( :uris ) OR :uris IS Null) " +
             "GROUP BY hit.app, hit.uri " +
             "ORDER BY counter DESC")
-    public List<ViewStats> findUniqueStats(
+    List<ViewStats> findUniqueStats(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("uris") List<String> uris
@@ -33,7 +33,7 @@ public interface StatsRepository extends JpaRepository<EndpointHit, Integer> {
             "AND (uri in ( :uris ) OR :uris IS Null) " +
             "GROUP BY hit.app, hit.uri " +
             "ORDER BY counter DESC")
-    public List<ViewStats> findStats(
+    List<ViewStats> findStats(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("uris") List<String> uris

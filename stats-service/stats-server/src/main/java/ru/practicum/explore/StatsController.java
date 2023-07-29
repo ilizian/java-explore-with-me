@@ -34,7 +34,7 @@ public class StatsController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    EndpointHitDto addEndpointHit(@RequestBody EndpointHitDto endpointHitDto) throws ValidationException {
+    public EndpointHitDto addEndpointHit(@RequestBody EndpointHitDto endpointHitDto) throws ValidationException {
         log.info("POST. Сохранить запрос к эндпоинту");
         return statsService.saveHit(endpointHitDto);
     }

@@ -19,7 +19,7 @@ public class ViewStatsClient extends BaseClient {
         Map<String, Object> params = Map.of(
                 "start", start,
                 "end", end,
-                "uris", uris,
+                "uris", String.join(",",uris),
                 "unique", unique);
         return get("?start={start}&end={end}&uris={uris}&unique={unique}", params);
     }

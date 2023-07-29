@@ -41,15 +41,11 @@ public class EndpointHit {
             return false;
         }
         EndpointHit thisHit = (EndpointHit) other;
-        return id.equals(thisHit.id)
-                && app.equals(thisHit.app)
-                && uri.equals(thisHit.uri)
-                && ip.equals(thisHit.ip)
-                && timestamp.equals(thisHit.timestamp);
+        return id.equals(thisHit.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, app, uri, ip, timestamp);
+        return Objects.hash(id);
     }
 }
