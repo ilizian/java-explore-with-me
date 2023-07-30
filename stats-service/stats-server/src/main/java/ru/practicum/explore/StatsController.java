@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.exception.ValidationException;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class StatsController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public EndpointHitDto addEndpointHit(@RequestBody EndpointHitDto endpointHitDto) throws ValidationException {
+    public EndpointHitDto addEndpointHit(@Valid @RequestBody EndpointHitDto endpointHitDto) throws ValidationException {
         log.info("POST. Сохранить запрос к эндпоинту");
         return statsService.saveHit(endpointHitDto);
     }
