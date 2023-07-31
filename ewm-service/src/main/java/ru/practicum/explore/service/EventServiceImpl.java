@@ -141,7 +141,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public CategoryDto addCategory(NewCategoryDto newCategoryDto) {
         if (categoryRepository.findByName(newCategoryDto.getName()).size() > 0) {
-            throw new ConflictException("Ошибка. Название категории уже существует" + newCategoryDto.getName());
+            throw new ConflictException("Ошибка. Название категории уже существует " + newCategoryDto.getName());
         }
         Category category = categoryRepository.save(categoryDtoMapper.mapNewDtoToCategory(newCategoryDto));
         return categoryDtoMapper.mapCategoryToDto(category);
@@ -164,9 +164,8 @@ public class EventServiceImpl implements EventService {
         if (categoryDto.getName() == null || categoryDto.getName().isBlank()) {
             throw new ValidationException("Ошибка. Имя категории не может быть пустым");
         }
-        List<Category> categories = categoryRepository.findByName(categoryDto.getName());
-        if (categories.size() > 0) {
-            return categoryDtoMapper.mapCategoryToDto(categories.get(0));
+        if (categoryRepository.findByName(categoryDto.getName()).size() > 0) {
+            throw new ConflictException("Ошибка. Название категории уже существует " + categoryDto.getName());
         }
         category.setName(categoryDto.getName());
         return categoryDtoMapper.mapCategoryToDto(category);
