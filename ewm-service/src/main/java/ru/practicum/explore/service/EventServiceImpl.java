@@ -164,9 +164,6 @@ public class EventServiceImpl implements EventService {
         if (categoryDto.getName() == null || categoryDto.getName().isBlank()) {
             throw new ValidationException("Ошибка. Имя категории не может быть пустым");
         }
-        if (categoryRepository.findByName(categoryDto.getName()).size() > 0) {
-            throw new ConflictException("Ошибка. Название категории уже существует" + categoryDto.getName());
-        }
         List<Category> categories = categoryRepository.findByName(categoryDto.getName());
         if (categories.size() > 0) {
             return categoryDtoMapper.mapCategoryToDto(categories.get(0));
@@ -431,6 +428,9 @@ public class EventServiceImpl implements EventService {
                 .build();
         if (event.getRequestModeration().equals(false)) {
             newRequest.setStatus("ACCEPTED");
+        }
+        if (event.getParticipantLimit() == 0) {
+            newRequest.setStatus("CONFIRMED");
         }
         return requestDtoMapper.mapRequestToDto(requestRepository.save(newRequest));
     }
