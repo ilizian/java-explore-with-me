@@ -244,6 +244,9 @@ public class EventServiceImpl implements EventService {
                 request.getRemoteAddr(),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT))));
         Event event = getEventById(eventId);
+        if (!event.getState().equals(EventState.PUBLISHED)) {
+            throw new ConflictException("Ошибка. Событие не опубликовано");
+        }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
         return getViewsCounter(eventFullDto);
     }
