@@ -33,6 +33,7 @@ services:
     depends_on:
       - ewm-db
     environment:
+      - SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm_db
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
