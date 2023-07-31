@@ -18,6 +18,19 @@ public class ErrorHandler {
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleThrowableExceptions(final Throwable e) {
+        return ApiError.builder()
+                .errors(Arrays.stream(e.getStackTrace())
+                        .map(Object::toString)
+                        .collect(Collectors.toList()))
+                .timestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
+                .message(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.toString())
+                .build();
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFound(final NotFoundException e) {
         return ApiError.builder()

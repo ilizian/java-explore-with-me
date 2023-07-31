@@ -48,6 +48,25 @@ public class EventServiceImpl implements EventService {
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     @Override
+    public EventFullDto addEvent(Long userId, NewEventDto newEvent) {
+        User user = userService.getUserById(userId);
+        Category category = categoryRepository.findById(newEvent.getCategory()).orElseThrow(
+                () -> new NotFoundException("Ошибка. Не найдена категория " + newEvent.getCategory())
+        );
+        Event event = eventDtoMapper.mapNewEventDtoToEvent(newEvent, category);
+        saveLocation(event);
+        event.setInitiator(user);
+        event.setCreatedOn(LocalDateTime.now());
+        event.setState(EventState.PENDING);
+        if (LocalDateTime.now().isAfter(event.getEventDate().minus(2, ChronoUnit.HOURS))) {
+            throw new ConflictException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
+        }
+        event = eventRepository.save(event);
+        EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
+        return getViewsCounter(eventFullDto);
+    }
+
+    @Override
     public List<EventFullDto> getEvents(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, Integer from, Integer size) {
         LocalDateTime rangeStartDateTime = null;
         LocalDateTime rangeEndDateTime = null;
@@ -150,25 +169,6 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto addEvent(Long userId, NewEventDto newEvent) {
-        User user = userService.getUserById(userId);
-        Category category = categoryRepository.findById(newEvent.getCategory()).orElseThrow(
-                () -> new NotFoundException("Ошибка. Не найдена категория " + newEvent.getCategory())
-        );
-        Event event = eventDtoMapper.mapNewEventDtoToEvent(newEvent, category);
-        saveLocation(event);
-        event.setInitiator(user);
-        event.setCreatedOn(LocalDateTime.now());
-        event.setState(EventState.PENDING);
-        if (LocalDateTime.now().isAfter(event.getEventDate().minus(2, ChronoUnit.HOURS))) {
-            throw new ConflictException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
-        }
-        event = eventRepository.save(event);
-        EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
-        return getViewsCounter(eventFullDto);
-    }
-
-    @Override
     public void saveLocation(Event event) {
         event.setLocation(locationRepository.save(event.getLocation()));
     }
@@ -245,7 +245,7 @@ public class EventServiceImpl implements EventService {
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT))));
         Event event = getEventById(eventId);
         if (!event.getState().equals(EventState.PUBLISHED)) {
-            throw new ConflictException("Ошибка. Событие не опубликовано");
+            throw new NotFoundException("Ошибка. Событие не опубликовано");
         }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
         return getViewsCounter(eventFullDto);

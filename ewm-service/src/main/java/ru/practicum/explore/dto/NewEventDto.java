@@ -3,7 +3,6 @@ package ru.practicum.explore.dto;
 import lombok.*;
 import ru.practicum.explore.model.Location;
 
-import org.springframework.beans.factory.annotation.Value;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -24,7 +23,6 @@ public class NewEventDto {
     private Location location;
     private Boolean paid;
     private Integer participantLimit;
-    @Value("true")
     private Boolean requestModeration;
     @NotBlank
     @Size(min = 3, max = 120)
