@@ -46,7 +46,7 @@ public class EventServiceImpl implements EventService {
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     @Override
-    public EventFullDto addEvent(Long userId, NewEventDto newEvent) {
+    public EventFullDto addEvent(Long userId, NewEventDto newEvent) throws ValidationException {
         User user = userService.getUserById(userId);
         Category category = categoryRepository.findById(newEvent.getCategory()).orElseThrow(
                 () -> new NotFoundException("Ошибка. Не найдена категория " + newEvent.getCategory())
@@ -56,23 +56,37 @@ public class EventServiceImpl implements EventService {
         event.setInitiator(user);
         event.setCreatedOn(LocalDateTime.now());
         event.setState(EventState.PENDING);
+        event.setConfirmedRequests(0L);
+        event.setPaid(false);
+        event.setParticipantLimit(0);
+        event.setRequestModeration(true);
         if (LocalDateTime.now().isAfter(event.getEventDate().minus(2, ChronoUnit.HOURS))) {
-            throw new ConflictException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
+            throw new ValidationException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
         }
         event = eventRepository.save(event);
+        List<ParticipationRequest> requests = requestRepository.findByEventId(event.getId());
+        for (ParticipationRequest request : requests) {
+            if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("ACCEPTED")) {
+                event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            }
+        }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
         return getViewsCounter(eventFullDto);
     }
 
     @Override
     public List<EventFullDto> getEvents(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, Integer from, Integer size) {
-        LocalDateTime rangeStartDateTime = null;
-        LocalDateTime rangeEndDateTime = null;
+        LocalDateTime rangeStartDateTime;
+        LocalDateTime rangeEndDateTime;
         if (rangeStart != null) {
             rangeStartDateTime = LocalDateTime.parse(rangeStart, DateTimeFormatter.ofPattern(DATE_TIME_FORMAT));
+        } else {
+            rangeStartDateTime = LocalDateTime.now().minusYears(1000L);
         }
         if (rangeEnd != null) {
             rangeEndDateTime = LocalDateTime.parse(rangeEnd, DateTimeFormatter.ofPattern(DATE_TIME_FORMAT));
+        } else {
+            rangeEndDateTime = LocalDateTime.now().plusYears(1000L);
         }
         List<EventState> eventStateList;
         if (states != null) {
@@ -137,8 +151,9 @@ public class EventServiceImpl implements EventService {
         if (categoryDto.getName() == null || categoryDto.getName().isBlank()) {
             throw new ValidationException("Ошибка. Имя категории не может быть пустым");
         }
-        if (categoryRepository.findByName(categoryDto.getName()).size() > 0) {
-            throw new ConflictException("Ошибка. Имя категории уже занято: " + categoryDto.getName());
+        List<Category> categories = categoryRepository.findByName(categoryDto.getName());
+        if (categories.size() > 0) {
+            return categoryDtoMapper.mapCategoryToDto(categories.get(0));
         }
         category.setName(categoryDto.getName());
         return categoryDtoMapper.mapCategoryToDto(category);
@@ -318,7 +333,7 @@ public class EventServiceImpl implements EventService {
             }
         }
         if (LocalDateTime.now().isAfter(event.getEventDate().minus(2, ChronoUnit.HOURS))) {
-            throw new ConflictException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
+            throw new ValidationException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
         }
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Ошибка. Неправильный статус запроса");
@@ -395,7 +410,7 @@ public class EventServiceImpl implements EventService {
         ParticipationRequest newRequest = ParticipationRequest.builder()
                 .requester(userId)
                 .created(LocalDateTime.now())
-                .status("PENDING")
+                .status("CONFIRMED")
                 .event(event)
                 .build();
         if (event.getRequestModeration().equals(false)) {
@@ -542,7 +557,7 @@ public class EventServiceImpl implements EventService {
                 confirmedRequestsCounter += 1;
             }
         }
-        if (event.getParticipantLimit() <= confirmedRequestsCounter) {
+        if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= confirmedRequestsCounter) {
             throw new ConflictException("Ошибка. Превышен предел количества заявок");
         }
         return false;

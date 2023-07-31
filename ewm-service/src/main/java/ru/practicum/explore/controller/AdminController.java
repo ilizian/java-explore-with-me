@@ -31,7 +31,7 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public List<UserDto> getUsers(@RequestParam List<Long> ids,
+    public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
                                   @RequestParam(required = false, defaultValue = "0") Integer from,
                                   @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("GET. Получить список пользователей");

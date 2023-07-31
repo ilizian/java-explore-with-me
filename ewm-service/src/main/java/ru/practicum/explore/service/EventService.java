@@ -25,7 +25,7 @@ public interface EventService {
 
     List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size);
 
-    EventFullDto addEvent(Long userId, NewEventDto newEvent);
+    EventFullDto addEvent(Long userId, NewEventDto newEvent) throws ValidationException;
 
     void saveLocation(Event event);
 

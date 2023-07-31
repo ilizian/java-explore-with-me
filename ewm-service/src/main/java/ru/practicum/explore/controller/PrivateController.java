@@ -48,7 +48,7 @@ public class PrivateController {
     @PostMapping("/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto addNewEventByUser(@PathVariable Long userId,
-                                          @RequestBody @Valid NewEventDto newEvent) {
+                                          @RequestBody @Valid NewEventDto newEvent) throws ValidationException {
         log.info("POST. Создать событие по пользователю с id " + userId);
         return eventService.addEvent(userId, newEvent);
     }

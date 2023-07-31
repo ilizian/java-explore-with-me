@@ -29,7 +29,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
-        List<User> users = userRepository.findAllByIdsPageable(ids, PageRequest.of(from / size, size));
+        List<User> users;
+        if (ids == null) {
+            users = userRepository.findAll();
+        } else {
+            users = userRepository.findAllByIdsPageable(ids, PageRequest.of(from / size, size));
+        }
         return users.stream()
                 .map(userDtoMapper::mapUserToDto)
                 .collect(Collectors.toList());

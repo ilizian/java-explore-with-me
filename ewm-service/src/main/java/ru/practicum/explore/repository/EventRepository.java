@@ -18,9 +18,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "where event.id in :events")
     List<Event> findEventsByIds(List<Long> events);
 
-    @Query("select event from Event event where event.initiator.id in :users " +
-            "and event.state in :states " +
-            "and event.category.id in :categories " +
+    @Query("select event from Event event where (event.initiator.id in :users OR :users IS Null) " +
+            "and (event.state in :states OR :states IS Null) " +
+            "and (event.category.id in :categories OR :categories IS Null) " +
             "and event.eventDate between :rangeStart and :rangeEnd " +
             "order by event.eventDate desc")
     List<Event> findAllEventsWithDates(List<Long> users,
