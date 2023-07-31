@@ -75,7 +75,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> getEvents(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, Integer from, Integer size) {
+    public List<EventFullDto> getEvents(List<Long> users, List<String> states, List<Long> categories,
+                                        String rangeStart, String rangeEnd, Integer from, Integer size) {
         LocalDateTime rangeStartDateTime;
         LocalDateTime rangeEndDateTime;
         if (rangeStart != null) {
@@ -96,6 +97,18 @@ public class EventServiceImpl implements EventService {
         }
         List<Event> events = eventRepository.findAllEventsWithDates(users, eventStateList, categories, rangeStartDateTime,
                 rangeEndDateTime, PageRequest.of(from / size, size));
+        HashMap<Long, Integer> eventIdsWithViewsCounter = new HashMap<>();
+        for (Event event : events) {
+            eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
+        }
+        List<ParticipationRequest> requests = requestRepository.findByEventIds(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        for (Event event : events) {
+            for (ParticipationRequest request : requests) {
+                if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("ACCEPTED")) {
+                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+                }
+            }
+        }
         List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
         eventFullDtos = getViewCounters(eventFullDtos);
         return eventFullDtos;
@@ -109,11 +122,11 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
         }
         if (!event.getState().equals(EventState.PENDING)) {
-            throw new ValidationException("Ошибка. Неправильный статус");
+            throw new ConflictException("Ошибка. Неправильный статус");
         }
         if ((!StateAction.REJECT_EVENT.toString().equals(updateRequest.getStateAction())
                 && event.getState().equals(EventState.PUBLISHED))) {
-            throw new ValidationException("Ошибка. Невозможно отклонить опубликованное событие");
+            throw new ConflictException("Ошибка. Невозможно отклонить опубликованное событие");
         }
         updateEventWithAdminRequest(event, updateRequest);
         if (event.getEventDate().isBefore(LocalDateTime.now())) {
@@ -150,6 +163,9 @@ public class EventServiceImpl implements EventService {
         );
         if (categoryDto.getName() == null || categoryDto.getName().isBlank()) {
             throw new ValidationException("Ошибка. Имя категории не может быть пустым");
+        }
+        if (categoryRepository.findByName(categoryDto.getName()).size() > 0) {
+            throw new ConflictException("Ошибка. Название категории уже существует" + categoryDto.getName());
         }
         List<Category> categories = categoryRepository.findByName(categoryDto.getName());
         if (categories.size() > 0) {
@@ -410,7 +426,7 @@ public class EventServiceImpl implements EventService {
         ParticipationRequest newRequest = ParticipationRequest.builder()
                 .requester(userId)
                 .created(LocalDateTime.now())
-                .status("CONFIRMED")
+                .status("PENDING")
                 .event(event)
                 .build();
         if (event.getRequestModeration().equals(false)) {
@@ -557,7 +573,7 @@ public class EventServiceImpl implements EventService {
                 confirmedRequestsCounter += 1;
             }
         }
-        if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= confirmedRequestsCounter) {
+        if (event.getParticipantLimit() > 0 & event.getParticipantLimit() <= confirmedRequestsCounter) {
             throw new ConflictException("Ошибка. Превышен предел количества заявок");
         }
         return false;
