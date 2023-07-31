@@ -46,4 +46,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "and event.eventDate <= :endDate " +
             "order by event.eventDate desc")
     List<Event> findAllByTextAndDateRange(String text, LocalDateTime startDate, LocalDateTime endDate, Pageable page);
+
 }

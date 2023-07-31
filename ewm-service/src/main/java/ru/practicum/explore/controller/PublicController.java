@@ -10,6 +10,7 @@ import ru.practicum.explore.dto.CategoryDto;
 import ru.practicum.explore.dto.CompilationDto;
 import ru.practicum.explore.dto.EventFullDto;
 import ru.practicum.explore.dto.EventShortDto;
+import ru.practicum.explore.exception.ValidationException;
 import ru.practicum.explore.service.CompilationService;
 import ru.practicum.explore.service.EventService;
 
@@ -60,15 +61,15 @@ public class PublicController {
 
     @GetMapping("/events")
     public List<EventShortDto> getEventsWithFilters(@RequestParam(required = false) String text,
-                                                    @RequestParam(required = false) List<Integer> categories,
+                                                    @RequestParam(required = false) List<Long> categories,
                                                     @RequestParam(required = false) Boolean paid,
                                                     @RequestParam(required = false) String rangeStart,
                                                     @RequestParam(required = false) String rangeEnd,
                                                     @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
-                                                    @RequestParam(required = false, defaultValue = "DESC") String sort,
+                                                    @RequestParam(required = false, defaultValue = "EVENT_DATE") String sort,
                                                     @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                                     @Positive @RequestParam(defaultValue = "10") Integer size,
-                                                    HttpServletRequest request) {
+                                                    HttpServletRequest request) throws ValidationException {
         log.info("GET. Получить список событий по заданным параметрам");
         return eventService.getEventsWithFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
     }

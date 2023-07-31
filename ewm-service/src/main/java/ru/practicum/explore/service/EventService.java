@@ -60,7 +60,7 @@ public interface EventService {
     CategoryDto getCategoryById(Long catId);
 
     List<EventShortDto> getEventsWithFilters(String text,
-                                             List<Integer> categories,
+                                             List<Long> categories,
                                              Boolean paid,
                                              String rangeStart,
                                              String rangeEnd,
@@ -68,7 +68,7 @@ public interface EventService {
                                              String sort,
                                              Integer from,
                                              Integer size,
-                                             HttpServletRequest request);
+                                             HttpServletRequest request) throws ValidationException;
 
     List<EventShortDto> createShortEventDtos(List<Event> events);
 

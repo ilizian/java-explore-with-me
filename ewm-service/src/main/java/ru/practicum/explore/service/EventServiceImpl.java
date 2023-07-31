@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.EndpointHitDto;
 import ru.practicum.explore.ViewStatsClient;
@@ -26,10 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -428,7 +426,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsWithFilters(String text,
-                                                    List<Integer> categories,
+                                                    List<Long> categories,
                                                     Boolean paid,
                                                     String rangeStart,
                                                     String rangeEnd,
@@ -436,7 +434,7 @@ public class EventServiceImpl implements EventService {
                                                     String sort,
                                                     Integer from,
                                                     Integer size,
-                                                    HttpServletRequest request) {
+                                                    HttpServletRequest request) throws ValidationException {
         List<Event> events;
         LocalDateTime startDate;
         LocalDateTime endDate;
@@ -449,15 +447,18 @@ public class EventServiceImpl implements EventService {
             text = "";
         }
         if (rangeEnd == null) {
-            events = eventRepository.findEventsByText(text.toLowerCase(), PageRequest.of(from / size, size));
+            events = eventRepository.findEventsByText(text.toLowerCase(), PageRequest.of(from / size, size,
+                    Sort.by(Sort.Direction.ASC, sort)));
         } else {
             endDate = LocalDateTime.parse(rangeEnd, DateTimeFormatter.ofPattern(DATE_TIME_FORMAT));
+            if (endDate.isBefore(startDate) || endDate.equals(startDate)) {
+                throw new ValidationException("Ошибка. Дата окончания диапазона не должны быть меньше даты начала");
+            }
             events = eventRepository.findAllByTextAndDateRange(text.toLowerCase(),
                     startDate,
                     endDate,
-                    PageRequest.of(from / size, size));
+                    PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort)));
         }
-
         events = events.stream()
                 .filter((event) -> EventState.PUBLISHED.equals(event.getState()))
                 .collect(Collectors.toList());
