@@ -438,6 +438,11 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         LocalDateTime startDate;
         LocalDateTime endDate;
+        if (sort.equals("EVENT_DATE")) {
+            sort = "eventDate";
+        } else {
+            sort = "views";
+        }
         if (rangeStart == null) {
             startDate = LocalDateTime.now();
         } else {
