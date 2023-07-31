@@ -573,7 +573,7 @@ public class EventServiceImpl implements EventService {
                 confirmedRequestsCounter += 1;
             }
         }
-        if (event.getParticipantLimit() > 0 & event.getParticipantLimit() <= confirmedRequestsCounter) {
+        if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= confirmedRequestsCounter) {
             throw new ConflictException("Ошибка. Превышен предел количества заявок");
         }
         return false;

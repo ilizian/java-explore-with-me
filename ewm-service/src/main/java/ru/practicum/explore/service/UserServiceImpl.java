@@ -2,6 +2,7 @@ package ru.practicum.explore.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.dto.NewUserRequest;
@@ -30,6 +31,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         List<User> users;
+        if (ids == null) {
+            Page<User> userPage = userRepository.findAll(PageRequest.of(from / size, size));
+            return userPage.stream()
+                    .map(userDtoMapper::mapUserToDto)
+                    .collect(Collectors.toList());
+        }
         users = userRepository.getAllByIdIsIn(ids, PageRequest.of(from / size, size));
         return users.stream()
                 .map(userDtoMapper::mapUserToDto)
