@@ -501,9 +501,6 @@ public class EventServiceImpl implements EventService {
                     endDate,
                     PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort)));
         }
-        events = events.stream()
-                .filter((event) -> EventState.PUBLISHED.equals(event.getState()))
-                .collect(Collectors.toList());
         viewStatsClient.addHit(new EndpointHitDto("ewm-service",
                 request.getRequestURI(),
                 request.getRemoteAddr(),

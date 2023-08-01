@@ -3,6 +3,7 @@ package ru.practicum.explore.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.dto.CompilationDto;
@@ -71,7 +72,13 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
-        List<Compilation> compilations = compilationRepository.findAllByPinned(pinned, PageRequest.of(from / size, size));
+        List<Compilation> compilations;
+        if (pinned == null) {
+            Page<Compilation> compilationsPage = compilationRepository.findAll(PageRequest.of(from / size, size));
+            compilations = compilationsPage.toList();
+        } else {
+            compilations = compilationRepository.findAllByPinned(pinned, PageRequest.of(from / size, size));
+        }
         List<CompilationDto> compilationDtos = new ArrayList<>();
         for (Compilation compilation : compilations) {
             CompilationDto dto = compilationDtoMapper.mapCompilationToDto(compilation);
