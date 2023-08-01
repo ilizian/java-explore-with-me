@@ -37,7 +37,6 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setPinned(false);
         }
         compilation = compilationRepository.save(compilation);
-        log.info("Подборка сохранена с id=" + compilation.getId());
         CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
         result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
         return result;
@@ -58,7 +57,6 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setPinned(compilationDto.getPinned());
         }
         compilation = compilationRepository.save(compilation);
-        log.info("Подборка id=" + compId + " обновлена");
         CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
         result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
         return result;
@@ -69,7 +67,6 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Подборка id=" + compId + " не найдена"));
         compilationRepository.deleteById(compId);
-        log.info("Подборка id=" + compId + " удалена");
     }
 
     @Override
@@ -91,7 +88,6 @@ public class CompilationServiceImpl implements CompilationService {
         );
         CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
         result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
-        log.info("Подборка id=" + compId + " найдена");
         return result;
     }
 }
