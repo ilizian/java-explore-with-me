@@ -56,20 +56,22 @@ public class EventServiceImpl implements EventService {
         event.setInitiator(user);
         event.setCreatedOn(LocalDateTime.now());
         event.setState(EventState.PENDING);
-        event.setConfirmedRequests(0L);
-        event.setPaid(false);
-        event.setParticipantLimit(0);
-        event.setRequestModeration(true);
+        if (event.getRequestModeration() == null) {
+            event.setRequestModeration(true);
+        }
+        if (event.getPaid() == null) {
+            event.setPaid(false);
+        }
+        if (event.getConfirmedRequests() == null) {
+            event.setConfirmedRequests(0L);
+        }
+        if (event.getParticipantLimit() == null) {
+            event.setParticipantLimit(0);
+        }
         if (LocalDateTime.now().isAfter(event.getEventDate().minus(2, ChronoUnit.HOURS))) {
             throw new ValidationException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
         }
         event = eventRepository.save(event);
-        List<ParticipationRequest> requests = requestRepository.findByEventId(event.getId());
-        for (ParticipationRequest request : requests) {
-            if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("ACCEPTED")) {
-                event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            }
-        }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
         return getViewsCounter(eventFullDto);
     }
@@ -100,14 +102,6 @@ public class EventServiceImpl implements EventService {
         HashMap<Long, Integer> eventIdsWithViewsCounter = new HashMap<>();
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
-        }
-        List<ParticipationRequest> requests = requestRepository.findByEventIds(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
-        for (Event event : events) {
-            for (ParticipationRequest request : requests) {
-                if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("ACCEPTED")) {
-                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-                }
-            }
         }
         List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
         eventFullDtos = getViewCounters(eventFullDtos);
@@ -431,10 +425,8 @@ public class EventServiceImpl implements EventService {
                 .status("PENDING")
                 .event(event)
                 .build();
-        if (event.getRequestModeration().equals(false)) {
-            newRequest.setStatus("ACCEPTED");
-        }
-        if (event.getParticipantLimit() == 0) {
+        if (event.getRequestModeration().equals(false) || event.getParticipantLimit() == 0) {
+            newRequest.setStatus("CONFIRMED");
             event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
@@ -521,7 +513,7 @@ public class EventServiceImpl implements EventService {
         List<EventShortDto> dtos = events.stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList());
         for (EventShortDto dto : dtos) {
             for (ParticipationRequest request : requests) {
-                if (request.getEvent().getId().equals(dto.getId()) && request.getStatus().equals("ACCEPTED")) {
+                if (request.getEvent().getId().equals(dto.getId()) && request.getStatus().equals("CONFIRMED")) {
                     dto.setConfirmedRequests(dto.getConfirmedRequests() + 1);
                 }
             }
@@ -571,11 +563,10 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
-
     private boolean participationLimitIsFull(Event event, List<ParticipationRequest> requests) {
         Integer confirmedRequestsCounter = 0;
         for (ParticipationRequest request : requests) {
-            if (request.getStatus().equals("ACCEPTED") || request.getStatus().equals("CONFIRMED")) {
+            if (request.getStatus().equals("CONFIRMED")) {
                 confirmedRequestsCounter += 1;
             }
         }
