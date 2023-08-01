@@ -9,6 +9,7 @@ import ru.practicum.explore.model.ViewStats;
 import ru.practicum.explore.repository.StatsRepository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,16 +30,22 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique)
+    public List<ViewStatsDto> getStats(String start, String end, List<String> uris, boolean unique)
             throws ValidationException {
         List<ViewStats> stats;
-        if (start.isAfter(end)) {
+        if (start == null || end == null) {
+            throw new ValidationException("Ошибка. Неправильный диапазон дат");
+        }
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime ldtStart = LocalDateTime.parse(start, dateTimeFormatter);
+        LocalDateTime ldtEnd = LocalDateTime.parse(end, dateTimeFormatter);
+        if (ldtStart.isAfter(ldtEnd)) {
             throw new ValidationException("Ошибка. Дата начала диапазона не может быть больше даты окончания");
         }
         if (unique) {
-            stats = statsRepository.findUniqueStats(start, end, uris);
+            stats = statsRepository.findUniqueStats(ldtStart, ldtEnd, uris);
         } else {
-            stats = statsRepository.findStats(start, end, uris);
+            stats = statsRepository.findStats(ldtStart, ldtEnd, uris);
         }
         return getStatsListDto(stats);
     }
