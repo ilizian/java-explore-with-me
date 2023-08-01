@@ -103,6 +103,14 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
         }
+        List<ParticipationRequest> requests = requestRepository.findByEventIds(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        for (Event event : events) {
+            for (ParticipationRequest request : requests) {
+                if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("CONFIRMED")) {
+                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+                }
+            }
+        }
         List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
         eventFullDtos = getViewCounters(eventFullDtos);
         return eventFullDtos;
