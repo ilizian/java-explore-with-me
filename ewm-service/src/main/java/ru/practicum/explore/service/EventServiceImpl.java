@@ -434,6 +434,10 @@ public class EventServiceImpl implements EventService {
         if (event.getRequestModeration().equals(false)) {
             newRequest.setStatus("ACCEPTED");
         }
+        if (event.getParticipantLimit() == 0) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            eventRepository.save(event);
+        }
         return requestDtoMapper.mapRequestToDto(requestRepository.save(newRequest));
     }
 
