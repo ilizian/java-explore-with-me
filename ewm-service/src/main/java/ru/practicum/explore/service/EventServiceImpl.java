@@ -58,9 +58,6 @@ public class EventServiceImpl implements EventService {
         if (event.getPaid() == null) {
             event.setPaid(false);
         }
-        if (event.getConfirmedRequests() == null) {
-            event.setConfirmedRequests(0L);
-        }
         if (event.getParticipantLimit() == null) {
             event.setParticipantLimit(0);
         }
@@ -100,14 +97,14 @@ public class EventServiceImpl implements EventService {
         }
         List<ParticipationRequest> requests = requestRepository
                 .findAllByEventIdInAndStatus(new ArrayList<>(eventIdsWithViewsCounter.keySet()), "CONFIRMED");
-        for (Event event : events) {
+        List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
+        for (EventFullDto eventFullDto : eventFullDtos) {
             for (ParticipationRequest request : requests) {
-                if (request.getEvent().getId().equals(event.getId())) {
-                    event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+                if (request.getEvent().getId().equals(eventFullDto.getId())) {
+                    eventFullDto.setConfirmedRequests(eventFullDto.getConfirmedRequests() + 1);
                 }
             }
         }
-        List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
         eventFullDtos = getViewCounters(eventFullDtos);
         return eventFullDtos;
     }
@@ -430,8 +427,6 @@ public class EventServiceImpl implements EventService {
                 .build();
         if (event.getRequestModeration().equals(false) || event.getParticipantLimit() == 0) {
             newRequest.setStatus("CONFIRMED");
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            eventRepository.save(event);
         }
         return requestDtoMapper.mapRequestToDto(requestRepository.save(newRequest));
     }

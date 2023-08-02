@@ -25,7 +25,6 @@ public class Event {
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
     private Category category;
-    private Long confirmedRequests;
     @Column(name = "created_on")
     private LocalDateTime createdOn;
     @Column(length = 7000)
