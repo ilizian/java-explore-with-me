@@ -126,6 +126,8 @@ public class EventServiceImpl implements EventService {
         saveLocation(event);
         event = eventRepository.save(event);
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        eventFullDto.setConfirmedRequests(requestsCount);
         return getViewsCounter(eventFullDto);
     }
 
@@ -203,6 +205,8 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
         }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        eventFullDto.setConfirmedRequests(requestsCount);
         return getViewsCounter(eventFullDto);
     }
 
@@ -217,6 +221,8 @@ public class EventServiceImpl implements EventService {
         saveLocation(event);
         eventRepository.save(event);
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        eventFullDto.setConfirmedRequests(requestsCount);
         return getViewsCounter(eventFullDto);
     }
 
@@ -275,6 +281,8 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Ошибка. Событие не опубликовано");
         }
         EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        eventFullDto.setConfirmedRequests(requestsCount);
         return getViewsCounter(eventFullDto);
     }
 

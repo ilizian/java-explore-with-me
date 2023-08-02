@@ -26,7 +26,6 @@ public class EventDtoMapper {
                 .id(event.getId())
                 .annotation(event.getAnnotation())
                 .category(categoryDtoMapper.mapCategoryToDto(event.getCategory()))
-                .confirmedRequests(event.getConfirmedRequests())
                 .createdOn(event.getCreatedOn().format(DateTimeFormatter.ofPattern(dateTimeFormat)))
                 .description(event.getDescription())
                 .eventDate(event.getEventDate().format(DateTimeFormatter.ofPattern(dateTimeFormat)))
