@@ -235,9 +235,9 @@ public class EventServiceImpl implements EventService {
                                                                      EventRequestStatusUpdateRequest updateRequest) throws ValidationException {
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         Event event = getEventById(eventId);
-        List<ParticipationRequest> requestsByEvent = getParticipationRequestsByEventId(eventId);
         List<ParticipationRequest> requests = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
-        if (participationLimitIsFull(event, requestsByEvent)) {
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        if (participationLimitIsFullCount(event, requestsCount)) {
             throw new ConflictException("Ошибка. Достигнут лимит заявок");
         }
         for (ParticipationRequest request : requests) {
@@ -415,14 +415,12 @@ public class EventServiceImpl implements EventService {
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Ошибка. Событие не опубликовано");
         }
-        List<ParticipationRequest> requests = getParticipationRequestsByEventId(event.getId());
-        if (participationLimitIsFull(event, requests)) {
+        Long requestsCount = requestRepository.countParticipationByEventIdAndStatus(event.getId(), "CONFIRMED");
+        if (participationLimitIsFullCount(event, requestsCount)) {
             throw new ConflictException("Ошибка. Достигнут лимит заявок");
         }
-        for (ParticipationRequest request : requests) {
-            if (request.getRequester().getId().equals(userId)) {
-                throw new ConflictException("Ошибка. Невозможно оставить заявку повторно");
-            }
+        if (requestRepository.existsByRequesterId(userId)) {
+            throw new ConflictException("Ошибка. Невозможно оставить заявку повторно");
         }
         ParticipationRequest newRequest = ParticipationRequest.builder()
                 .requester(user)
@@ -567,14 +565,8 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
-    private boolean participationLimitIsFull(Event event, List<ParticipationRequest> requests) {
-        Integer confirmedRequestsCounter = 0;
-        for (ParticipationRequest request : requests) {
-            if (request.getStatus().equals("CONFIRMED")) {
-                confirmedRequestsCounter += 1;
-            }
-        }
-        if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= confirmedRequestsCounter) {
+    private boolean participationLimitIsFullCount(Event event, Long requests) {
+        if (event.getParticipantLimit() > 0 && event.getParticipantLimit() <= requests) {
             throw new ConflictException("Ошибка. Превышен предел количества заявок");
         }
         return false;
