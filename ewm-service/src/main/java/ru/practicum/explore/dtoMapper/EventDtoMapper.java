@@ -32,6 +32,7 @@ public class EventDtoMapper {
                 .initiator(userDtoMapper.mapUserToShortDto(event.getInitiator()))
                 .location(event.getLocation())
                 .paid(event.getPaid())
+                .confirmedRequests(0L)
                 .participantLimit(event.getParticipantLimit())
                 .publishedOn(checkPublishedOn(event))
                 .requestModeration(event.getRequestModeration())
