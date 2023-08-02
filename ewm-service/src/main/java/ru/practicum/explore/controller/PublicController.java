@@ -71,7 +71,8 @@ public class PublicController {
                                                     @Positive @RequestParam(defaultValue = "10") Integer size,
                                                     HttpServletRequest request) throws ValidationException {
         log.info("GET. Получить список событий по заданным параметрам");
-        return eventService.getEventsWithFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
+        return eventService.getEventsWithFilters(text, categories, paid, rangeStart, rangeEnd,
+                onlyAvailable, sort, from, size, request.getRequestURI(),  request.getRemoteAddr());
     }
 
     @GetMapping("/events/{id}")

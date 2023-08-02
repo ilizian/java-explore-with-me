@@ -471,7 +471,8 @@ public class EventServiceImpl implements EventService {
                                                     String sort,
                                                     Integer from,
                                                     Integer size,
-                                                    HttpServletRequest request) throws ValidationException {
+                                                    String requestUri,
+                                                    String requestAddr) throws ValidationException {
         List<Event> events;
         LocalDateTime startDate;
         LocalDateTime endDate;
@@ -502,8 +503,8 @@ public class EventServiceImpl implements EventService {
                     PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort)));
         }
         viewStatsClient.addHit(new EndpointHitDto("ewm-service",
-                request.getRequestURI(),
-                request.getRemoteAddr(),
+                requestUri,
+                requestAddr,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT))));
         return createShortEventDtos(events);
     }

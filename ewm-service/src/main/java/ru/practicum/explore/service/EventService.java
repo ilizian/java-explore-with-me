@@ -68,7 +68,8 @@ public interface EventService {
                                              String sort,
                                              Integer from,
                                              Integer size,
-                                             HttpServletRequest request) throws ValidationException;
+                                             String requestUri,
+                                             String requestAddr) throws ValidationException;
 
     List<EventShortDto> createShortEventDtos(List<Event> events);
 
