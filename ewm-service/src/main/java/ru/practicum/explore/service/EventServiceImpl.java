@@ -197,7 +197,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
         User user = userService.getUserById(userId);
-        List<Event> events = eventRepository.findAllByUserId(user, PageRequest.of(from / size, size));
+        List<Event> events = eventRepository.findAllByInitiator(user, PageRequest.of(from / size, size));
         return listEventToEventShortDto(events);
     }
 

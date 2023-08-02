@@ -14,9 +14,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findAllByCategoryId(Long catId);
 
-    @Query("select event from Event event " +
-            "where event.id in :events")
-    List<Event> findEventsByIds(List<Long> events);
+    List<Event> findAllByIdIn(List<Long> events);
 
     @Query("select event from Event event where (event.initiator.id in :users OR :users IS Null) " +
             "and (event.state in :states OR :states IS Null) " +
@@ -30,8 +28,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                        LocalDateTime rangeEnd,
                                        Pageable page);
 
-    @Query("select event from Event event where event.initiator in :user")
-    List<Event> findAllByUserId(User user, Pageable page);
+    List<Event> findAllByInitiator(User user, Pageable page);
 
     @Query("select event from Event event " +
             "where (lower(event.annotation) like %:text% " +

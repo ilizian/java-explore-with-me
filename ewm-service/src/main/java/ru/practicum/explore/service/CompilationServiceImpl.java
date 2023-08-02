@@ -32,7 +32,10 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto compilationDto) {
-        List<Event> events = eventRepository.findEventsByIds(compilationDto.getEvents());
+        List<Event> events = new ArrayList<>();
+        if (compilationDto.getEvents() != null) {
+            events = eventRepository.findAllByIdIn(compilationDto.getEvents());
+        }
         Compilation compilation = compilationDtoMapper.mapNewCompilationDtoToCompilation(compilationDto, events);
         if (compilation.getPinned() == null) {
             compilation.setPinned(false);
@@ -47,8 +50,8 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest compilationDto) {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Подборка id=" + compId + " не найдена"));
-        List<Event> events = eventRepository.findEventsByIds(compilationDto.getEvents());
         if (compilationDto.getEvents() != null) {
+            List<Event> events = eventRepository.findAllByIdIn(compilationDto.getEvents());
             compilation.setEvents(events);
         }
         if (compilationDto.getTitle() != null) {
