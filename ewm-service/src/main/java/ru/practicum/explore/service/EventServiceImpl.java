@@ -252,13 +252,17 @@ public class EventServiceImpl implements EventService {
                 request.setStatus(updateRequest.getStatus());
             }
         }
+        List<ParticipationRequest> participationRequestList = new ArrayList<>();
         for (ParticipationRequest request : requests) {
             if (request.getStatus().equals("PENDING") || request.getStatus().equals("CONFIRMED") || request.getStatus().equals("REJECTED")) {
                 result.addRequest(request);
-                requestRepository.save(request);
+                participationRequestList.add(request);
             } else {
                 throw new ValidationException("Ошибка. Неправильный статус запроса");
             }
+        }
+        if (!participationRequestList.isEmpty()) {
+            requestRepository.saveAll(participationRequestList);
         }
         return result;
     }
