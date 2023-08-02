@@ -10,7 +10,6 @@ import ru.practicum.explore.dto.CompilationDto;
 import ru.practicum.explore.dto.NewCompilationDto;
 import ru.practicum.explore.dto.UpdateCompilationRequest;
 import ru.practicum.explore.dtoMapper.CompilationDtoMapper;
-import ru.practicum.explore.dtoMapper.EventDtoMapper;
 import ru.practicum.explore.exception.NotFoundException;
 import ru.practicum.explore.model.Compilation;
 import ru.practicum.explore.model.Event;
@@ -19,7 +18,6 @@ import ru.practicum.explore.repository.EventRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -28,7 +26,6 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final CompilationDtoMapper compilationDtoMapper;
     private final EventRepository eventRepository;
-    private final EventDtoMapper eventDtoMapper;
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto compilationDto) {
@@ -41,9 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setPinned(false);
         }
         compilation = compilationRepository.save(compilation);
-        CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
-        result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
-        return result;
+        return compilationDtoMapper.mapCompilationToDto(compilation);
     }
 
     @Override
@@ -61,9 +56,7 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setPinned(compilationDto.getPinned());
         }
         compilation = compilationRepository.save(compilation);
-        CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
-        result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
-        return result;
+        return compilationDtoMapper.mapCompilationToDto(compilation);
     }
 
     @Override
@@ -85,7 +78,6 @@ public class CompilationServiceImpl implements CompilationService {
         List<CompilationDto> compilationDtos = new ArrayList<>();
         for (Compilation compilation : compilations) {
             CompilationDto dto = compilationDtoMapper.mapCompilationToDto(compilation);
-            dto.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
             compilationDtos.add(dto);
         }
         return compilationDtos;
@@ -96,8 +88,6 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Подборка id=" + compId + " не найдена")
         );
-        CompilationDto result = compilationDtoMapper.mapCompilationToDto(compilation);
-        result.setEvents(compilation.getEvents().stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList()));
-        return result;
+        return compilationDtoMapper.mapCompilationToDto(compilation);
     }
 }
