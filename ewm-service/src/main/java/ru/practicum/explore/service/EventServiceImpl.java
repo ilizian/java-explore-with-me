@@ -235,8 +235,9 @@ public class EventServiceImpl implements EventService {
                                                                      EventRequestStatusUpdateRequest updateRequest) throws ValidationException {
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         Event event = getEventById(eventId);
+        List<ParticipationRequest> requestsByEvent = getParticipationRequestsByEventId(eventId);
         List<ParticipationRequest> requests = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
-        if (participationLimitIsFull(event, requests)) {
+        if (participationLimitIsFull(event, requestsByEvent)) {
             throw new ConflictException("Ошибка. Достигнут лимит заявок");
         }
         for (ParticipationRequest request : requests) {
