@@ -16,12 +16,8 @@ import ru.practicum.explore.exception.ConflictException;
 import ru.practicum.explore.exception.NotFoundException;
 import ru.practicum.explore.exception.ValidationException;
 import ru.practicum.explore.misc.EventState;
-import ru.practicum.explore.misc.StateAction;
 import ru.practicum.explore.model.*;
-import ru.practicum.explore.repository.CategoryRepository;
-import ru.practicum.explore.repository.EventRepository;
-import ru.practicum.explore.repository.LocationRepository;
-import ru.practicum.explore.repository.RequestRepository;
+import ru.practicum.explore.repository.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -34,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final CategoryDtoMapper categoryDtoMapper;
     private final CategoryRepository categoryRepository;
     private final EventDtoMapper eventDtoMapper;
@@ -47,7 +43,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto addEvent(Long userId, NewEventDto newEvent) throws ValidationException {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Category category = categoryRepository.findById(newEvent.getCategory()).orElseThrow(
                 () -> new NotFoundException("Ошибка. Не найдена категория " + newEvent.getCategory())
         );
@@ -72,8 +68,7 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Ошибка. Изменение невозможно, т.к. до начала событий меньше 2 часов");
         }
         event = eventRepository.save(event);
-        EventFullDto eventFullDto = eventDtoMapper.mapEventToFullDto(event);
-        return getViewsCounter(eventFullDto);
+        return eventDtoMapper.mapEventToFullDto(event);
     }
 
     @Override
@@ -103,10 +98,11 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
         }
-        List<ParticipationRequest> requests = requestRepository.findAllByEventIdIn(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        List<ParticipationRequest> requests = requestRepository
+                .findAllByEventIdInAndStatus(new ArrayList<>(eventIdsWithViewsCounter.keySet()), "CONFIRMED");
         for (Event event : events) {
             for (ParticipationRequest request : requests) {
-                if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("CONFIRMED")) {
+                if (request.getEvent().getId().equals(event.getId())) {
                     event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                 }
             }
@@ -125,10 +121,6 @@ public class EventServiceImpl implements EventService {
         }
         if (!event.getState().equals(EventState.PENDING)) {
             throw new ConflictException("Ошибка. Неправильный статус");
-        }
-        if ((!StateAction.REJECT_EVENT.toString().equals(updateRequest.getStateAction())
-                && event.getState().equals(EventState.PUBLISHED))) {
-            throw new ConflictException("Ошибка. Невозможно отклонить опубликованное событие");
         }
         updateEventWithAdminRequest(event, updateRequest);
         if (event.getEventDate().isBefore(LocalDateTime.now())) {
@@ -196,7 +188,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         List<Event> events = eventRepository.findAllByInitiator(user, PageRequest.of(from / size, size));
         return listEventToEventShortDto(events);
     }
@@ -208,7 +200,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventOfUserByIds(Long userId, Long eventId) throws ValidationException {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Event event = getEventById(eventId);
         if (!user.getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
@@ -219,7 +211,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto updateEventOfUserByIds(Long userId, Long eventId, UpdateEventUserRequest request) throws ValidationException {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Event event = getEventById(eventId);
         if (!user.getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
@@ -243,7 +235,7 @@ public class EventServiceImpl implements EventService {
                                                                      EventRequestStatusUpdateRequest updateRequest) throws ValidationException {
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         Event event = getEventById(eventId);
-        List<ParticipationRequest> requests = getParticipationRequestsByEventId(eventId);
+        List<ParticipationRequest> requests = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
         if (participationLimitIsFull(event, requests)) {
             throw new ConflictException("Ошибка. Достигнут лимит заявок");
         }
@@ -269,7 +261,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<ParticipationRequestDto> getParticipationRequestsByUserId(Long userId) {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         List<ParticipationRequest> participationRequests = requestRepository.findAllByRequester(user);
         return listParticipationRequestToDto(participationRequests);
     }
@@ -290,7 +282,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<ParticipationRequest> getParticipationRequests(Long userId, Long eventId) throws ValidationException {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Event event = getEventById(eventId);
         if (!user.getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
@@ -414,7 +406,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         Event event = getEventById(eventId);
         if (event.getInitiator().getId().equals(userId)) {
             throw new ConflictException("Ошибка. Невозможно добавить заявку на участие в своём событии");
@@ -447,7 +439,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public ParticipationRequestDto cancelParticipationRequest(Long userId, Long requestId) {
-        User user = userService.getUserById(userId);
+        User user = userRepository.getUserById(userId);
         ParticipationRequest request = requestRepository.findById(requestId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Не найден запрос по id " + requestId)
         );
@@ -519,11 +511,12 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
         }
-        List<ParticipationRequest> requests = requestRepository.findAllByEventIdIn(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        List<ParticipationRequest> requests = requestRepository
+                .findAllByEventIdInAndStatus(new ArrayList<>(eventIdsWithViewsCounter.keySet()), "CONFIRMED");
         List<EventShortDto> dtos = events.stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList());
         for (EventShortDto dto : dtos) {
             for (ParticipationRequest request : requests) {
-                if (request.getEvent().getId().equals(dto.getId()) && request.getStatus().equals("CONFIRMED")) {
+                if (request.getEvent().getId().equals(dto.getId())) {
                     dto.setConfirmedRequests(dto.getConfirmedRequests() + 1);
                 }
             }
