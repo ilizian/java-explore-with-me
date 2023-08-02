@@ -19,6 +19,7 @@ public class ParticipationRequest {
     private LocalDateTime created;
     @ManyToOne
     private Event event;
-    private Long requester;
+    @ManyToOne
+    private User requester;
     private String status;
 }

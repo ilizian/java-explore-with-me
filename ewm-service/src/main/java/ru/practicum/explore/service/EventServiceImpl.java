@@ -103,7 +103,7 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
         }
-        List<ParticipationRequest> requests = requestRepository.findByEventIds(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        List<ParticipationRequest> requests = requestRepository.findAllByEventIdIn(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
         for (Event event : events) {
             for (ParticipationRequest request : requests) {
                 if (request.getEvent().getId().equals(event.getId()) && request.getStatus().equals("CONFIRMED")) {
@@ -266,7 +266,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<ParticipationRequestDto> getParticipationRequestsByUserId(Long userId) {
         User user = userService.getUserById(userId);
-        List<ParticipationRequest> participationRequests = requestRepository.findByUserId(userId);
+        List<ParticipationRequest> participationRequests = requestRepository.findAllByRequester(user);
         return listParticipationRequestToDto(participationRequests);
     }
 
@@ -291,13 +291,13 @@ public class EventServiceImpl implements EventService {
         if (!user.getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
         }
-        return requestRepository.findByEventInitiatorId(userId);
+        return requestRepository.findAllByEventInitiatorId(userId);
     }
 
     @Override
     public List<ParticipationRequest> getParticipationRequestsByEventId(Long eventId) {
         Event event = getEventById(eventId);
-        return requestRepository.findByEventId(eventId);
+        return requestRepository.findAllByEventId(eventId);
     }
 
     @Override
@@ -423,12 +423,12 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Ошибка. Достигнут лимит заявок");
         }
         for (ParticipationRequest request : requests) {
-            if (request.getRequester().equals(userId)) {
+            if (request.getRequester().getId().equals(userId)) {
                 throw new ConflictException("Ошибка. Невозможно оставить заявку повторно");
             }
         }
         ParticipationRequest newRequest = ParticipationRequest.builder()
-                .requester(userId)
+                .requester(user)
                 .created(LocalDateTime.now())
                 .status("PENDING")
                 .event(event)
@@ -447,7 +447,7 @@ public class EventServiceImpl implements EventService {
         ParticipationRequest request = requestRepository.findById(requestId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Не найден запрос по id " + requestId)
         );
-        if (!request.getRequester().equals(userId)) {
+        if (!request.getRequester().getId().equals(userId)) {
             throw new ConflictException("Ошибка. Заявка оставлена другим пользователем");
         }
         request.setStatus("CANCELED");
@@ -515,7 +515,7 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
         }
-        List<ParticipationRequest> requests = requestRepository.findByEventIds(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
+        List<ParticipationRequest> requests = requestRepository.findAllByEventIdIn(new ArrayList<>(eventIdsWithViewsCounter.keySet()));
         List<EventShortDto> dtos = events.stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList());
         for (EventShortDto dto : dtos) {
             for (ParticipationRequest request : requests) {
