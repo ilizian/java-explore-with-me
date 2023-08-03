@@ -82,7 +82,7 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequest> participationRequestList = new ArrayList<>();
         for (ParticipationRequest request : requests) {
             if (request.getStatus().equals("PENDING") || request.getStatus().equals("CONFIRMED") || request.getStatus().equals("REJECTED")) {
-                result.addRequest(request);
+                addRequest(result, request);
                 participationRequestList.add(request);
             } else {
                 throw new ValidationException("Ошибка. Неправильный статус запроса");
@@ -142,5 +142,21 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Ошибка. Превышен предел количества заявок");
         }
         return false;
+    }
+
+    public void addRequest(EventRequestStatusUpdateResult eventRequestStatusUpdateResult, ParticipationRequest request) {
+        List<ParticipationRequestDto> resultConfirmed = eventRequestStatusUpdateResult.getConfirmedRequests();
+        List<ParticipationRequestDto> resultRejected = eventRequestStatusUpdateResult.getRejectedRequests();
+        String created = request.getCreated().toString();
+        Long event = request.getEvent().getId();
+        Long id = request.getId();
+        Long requester = request.getRequester().getId();
+        String status = request.getStatus();
+        ParticipationRequestDto result = new ParticipationRequestDto(created, event, id, requester, status);
+        if ("CONFIRMED".equals(status)) {
+            resultConfirmed.add(result);
+        } else if ("REJECTED".equals(status)) {
+            resultRejected.add(result);
+        }
     }
 }
