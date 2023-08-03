@@ -3,7 +3,6 @@ package ru.practicum.explore.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.EndpointHitDto;
 import ru.practicum.explore.ViewStatsClient;
@@ -313,11 +312,6 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         LocalDateTime startDate;
         LocalDateTime endDate;
-        if (sort.equals("EVENT_DATE")) {
-            sort = "eventDate";
-        } else {
-            sort = "views";
-        }
         if (rangeStart == null) {
             startDate = LocalDateTime.now();
         } else {
@@ -327,8 +321,7 @@ public class EventServiceImpl implements EventService {
             text = "";
         }
         if (rangeEnd == null) {
-            events = eventRepository.findEventsByText(text.toLowerCase(), PageRequest.of(from / size, size,
-                    Sort.by(Sort.Direction.ASC, sort)));
+            events = eventRepository.findEventsByText(text.toLowerCase(), PageRequest.of(from / size, size));
         } else {
             endDate = LocalDateTime.parse(rangeEnd, DateTimeFormatter.ofPattern(DATE_TIME_FORMAT));
             if (endDate.isBefore(startDate) || endDate.equals(startDate)) {
@@ -337,13 +330,24 @@ public class EventServiceImpl implements EventService {
             events = eventRepository.findAllByTextAndDateRange(text.toLowerCase(),
                     startDate,
                     endDate,
-                    PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort)));
+                    PageRequest.of(from / size, size));
         }
         viewStatsClient.addHit(new EndpointHitDto("ewm-service",
                 requestUri,
                 requestAddr,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT))));
-        return createShortEventDtos(events);
+        List<EventShortDto> eventShortDtoList = createShortEventDtos(events);
+        List<EventShortDto> sortedeventShortDtoList;
+        if (sort.equals("EVENT_DATE")) {
+            sortedeventShortDtoList = eventShortDtoList.stream()
+                    .sorted(Comparator.comparing(EventShortDto::getEventDate))
+                    .collect(Collectors.toList());
+        } else {
+            sortedeventShortDtoList = eventShortDtoList.stream()
+                    .sorted(Comparator.comparing(EventShortDto::getViews))
+                    .collect(Collectors.toList());
+        }
+        return sortedeventShortDtoList;
     }
 
     @Override
