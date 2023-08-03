@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.EndpointHitDto;
 import ru.practicum.explore.ViewStatsClient;
+import ru.practicum.explore.ViewStatsDto;
 import ru.practicum.explore.dto.*;
 import ru.practicum.explore.dtoMapper.CategoryDtoMapper;
 import ru.practicum.explore.dtoMapper.EventDtoMapper;
@@ -88,10 +89,7 @@ public class EventServiceImpl implements EventService {
         }
         List<Event> events = eventRepository.findAllEventsWithDates(users, eventStateList, categories, rangeStartDateTime,
                 rangeEndDateTime, PageRequest.of(from / size, size));
-        HashMap<Long, Integer> eventIdsWithViewsCounter = new HashMap<>();
-        for (Event event : events) {
-            eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
-        }
+        HashMap<Long, Integer> eventIdsWithViewsCounter = getMapByStatServer(events);
         List<ParticipationRequest> requests = requestRepository
                 .findAllByEventIdInAndStatus(new ArrayList<>(eventIdsWithViewsCounter.keySet()), "CONFIRMED");
         List<EventFullDto> eventFullDtos = listEventToEventFullDto(events);
@@ -101,8 +99,8 @@ public class EventServiceImpl implements EventService {
                     eventFullDto.setConfirmedRequests(eventFullDto.getConfirmedRequests() + 1);
                 }
             }
+            eventFullDto.setViews(eventIdsWithViewsCounter.get(eventFullDto.getId()));
         }
-        eventFullDtos = getViewCounters(eventFullDtos);
         return eventFullDtos;
     }
 
@@ -350,10 +348,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> createShortEventDtos(List<Event> events) {
-        HashMap<Long, Integer> eventIdsWithViewsCounter = new HashMap<>();
-        for (Event event : events) {
-            eventIdsWithViewsCounter.put(event.getId(), getViewsCounter(eventDtoMapper.mapEventToFullDto(event)).getViews());
-        }
+        HashMap<Long, Integer> eventIdsWithViewsCounter = getMapByStatServer(events);
         List<ParticipationRequest> requests = requestRepository
                 .findAllByEventIdInAndStatus(new ArrayList<>(eventIdsWithViewsCounter.keySet()), "CONFIRMED");
         List<EventShortDto> dtos = events.stream().map(eventDtoMapper::mapEventToShortDto).collect(Collectors.toList());
@@ -368,8 +363,7 @@ public class EventServiceImpl implements EventService {
         return dtos;
     }
 
-    @Override
-    public EventFullDto getViewsCounter(EventFullDto eventFullDto) {
+    private EventFullDto getViewsCounter(EventFullDto eventFullDto) {
         Integer views = viewStatsClient.getStats(eventFullDto.getCreatedOn(),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)),
                 List.of("/events/" + eventFullDto.getId()), true).size();
@@ -377,12 +371,40 @@ public class EventServiceImpl implements EventService {
         return eventFullDto;
     }
 
-    @Override
-    public List<EventFullDto> getViewCounters(List<EventFullDto> dtos) {
-        for (EventFullDto dto : dtos) {
-            getViewsCounter(dto);
+    private HashMap<Long, Integer> getMapByStatServer(List<Event> events) {
+        HashMap<Long, Integer> eventIdsWithViewsCounter = new HashMap<>();
+        List<String> uris = events.stream()
+                .map(eventDtoMapper::mapEventToFullDto)
+                .map(EventFullDto::getId)
+                .map(id -> String.format("/events/%s", id))
+                .collect(Collectors.toUnmodifiableList());
+        List<ViewStatsDto> viewStatsDtos = getStatsList(uris);
+        for (ViewStatsDto viewStatsDto : viewStatsDtos) {
+            if (viewStatsDto.getUri().equals("/events")) {
+                eventIdsWithViewsCounter.put(0L, Math.toIntExact(viewStatsDto.getHits()));
+            } else {
+                String path = viewStatsDto.getUri().split("/")[2];
+                Long id = Long.parseLong(path);
+                for (Event event : events) {
+                    if (Objects.equals(event.getId(), id)) {
+                        eventIdsWithViewsCounter.put(id, Math.toIntExact(viewStatsDto.getHits()));
+                    }
+                }
+            }
         }
-        return dtos;
+        for (Event event : events) {
+            if (!eventIdsWithViewsCounter.containsKey(event.getId())) {
+                eventIdsWithViewsCounter.put(event.getId(), 0);
+            }
+        }
+        return eventIdsWithViewsCounter;
+    }
+
+    private List<ViewStatsDto> getStatsList(List<String> uris) {
+        return viewStatsClient.getStats(LocalDateTime.of(2000, 1, 1, 0, 0)
+                        .format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)),
+                uris, true);
     }
 
     private List<EventFullDto> listEventToEventFullDto(List<Event> events) {

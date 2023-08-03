@@ -47,7 +47,4 @@ public interface EventService {
 
     List<EventShortDto> createShortEventDtos(List<Event> events);
 
-    EventFullDto getViewsCounter(EventFullDto eventFullDto);
-
-    List<EventFullDto> getViewCounters(List<EventFullDto> dtos);
 }
