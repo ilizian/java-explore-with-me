@@ -3,6 +3,7 @@ package ru.practicum.explore.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.practicum.explore.exception.ValidationException;
+import ru.practicum.explore.service.CategoryService;
 import ru.practicum.explore.service.CompilationService;
 import ru.practicum.explore.service.EventService;
 import ru.practicum.explore.service.UserService;
@@ -19,15 +20,18 @@ import java.util.List;
 public class AdminController {
     private final EventService eventService;
     private final UserService userService;
+    private final CategoryService categoryService;
     private final CompilationService compilationService;
 
     @Autowired
     public AdminController(UserService userService,
                            EventService eventService,
-                           CompilationService compilationService) {
+                           CompilationService compilationService,
+                           CategoryService categoryService) {
         this.userService = userService;
         this.eventService = eventService;
         this.compilationService = compilationService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping("/users")
@@ -56,14 +60,14 @@ public class AdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto addCategory(@RequestBody @Valid NewCategoryDto categoryDto) {
         log.info("POST. Создать категорию " + categoryDto.getName());
-        return eventService.addCategory(categoryDto);
+        return categoryService.addCategory(categoryDto);
     }
 
     @DeleteMapping("/categories/{catId}")
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable Long catId) {
         log.info("DELETE. Удалить категорию по id " + catId);
-        eventService.deleteCategoryById(catId);
+        categoryService.deleteCategoryById(catId);
     }
 
     @PostMapping("/compilations")
@@ -91,7 +95,7 @@ public class AdminController {
     public CategoryDto updateCategory(@PathVariable Long catId,
                                       @RequestBody @Valid CategoryDto categoryDto) throws ValidationException {
         log.info("PATCH. Изменить категорию по id " + catId);
-        return eventService.updateCategory(catId, categoryDto);
+        return categoryService.updateCategory(catId, categoryDto);
     }
 
     @GetMapping("/events")

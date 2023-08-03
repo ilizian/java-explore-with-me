@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.practicum.explore.exception.ValidationException;
 import ru.practicum.explore.service.EventService;
 import ru.practicum.explore.dto.*;
+import ru.practicum.explore.service.RequestService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -17,16 +18,18 @@ import java.util.List;
 @Slf4j
 public class PrivateController {
     private final EventService eventService;
+    private final RequestService requestService;
 
     @Autowired
-    public PrivateController(EventService eventService) {
+    public PrivateController(EventService eventService, RequestService requestService) {
         this.eventService = eventService;
+        this.requestService = requestService;
     }
 
     @GetMapping("/requests")
     public List<ParticipationRequestDto> getRequestsOfUser(@PathVariable Long userId) {
         log.info("GET. Получить информацию о заявках пользователя c id " + userId);
-        return eventService.getParticipationRequestsByUserId(userId);
+        return requestService.getParticipationRequestsByUserId(userId);
     }
 
     @PostMapping("/requests")
@@ -34,7 +37,7 @@ public class PrivateController {
     public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
                                                            @RequestParam Long eventId) {
         log.info("POST. Создать запрос на участие пользователя с id " + userId);
-        return eventService.addParticipationRequest(userId, eventId);
+        return requestService.addParticipationRequest(userId, eventId);
     }
 
     @GetMapping("/events")
@@ -72,7 +75,7 @@ public class PrivateController {
     public List<ParticipationRequestDto> getParticipationRequest(@PathVariable Long userId,
                                                                  @PathVariable Long eventId) throws ValidationException {
         log.info("GET. Получить запросы на участие в событии по пользователю c id " + userId);
-        return eventService.getParticipationRequestsDto(userId, eventId);
+        return requestService.getParticipationRequestsDto(userId, eventId);
     }
 
     @PatchMapping("/events/{eventId}/requests")
@@ -81,13 +84,13 @@ public class PrivateController {
                                                                      @RequestBody @Valid EventRequestStatusUpdateRequest request)
             throws ValidationException {
         log.info("PATCH. Измененить статус заявок на участие в событии по пользователю c id " + userId);
-        return eventService.updateParticipationRequest(userId, eventId, request);
+        return requestService.updateParticipationRequest(userId, eventId, request);
     }
 
     @PatchMapping("/requests/{requestId}/cancel")
     public ParticipationRequestDto cancelParticipationRequest(@PathVariable Long userId,
                                                               @PathVariable Long requestId) {
         log.info("PATCH. Отменить запрос на участие  пользователем c id " + userId);
-        return eventService.cancelParticipationRequest(userId, requestId);
+        return requestService.cancelParticipationRequest(userId, requestId);
     }
 }

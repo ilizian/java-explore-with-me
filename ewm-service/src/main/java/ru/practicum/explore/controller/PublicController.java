@@ -11,6 +11,7 @@ import ru.practicum.explore.dto.CompilationDto;
 import ru.practicum.explore.dto.EventFullDto;
 import ru.practicum.explore.dto.EventShortDto;
 import ru.practicum.explore.exception.ValidationException;
+import ru.practicum.explore.service.CategoryService;
 import ru.practicum.explore.service.CompilationService;
 import ru.practicum.explore.service.EventService;
 
@@ -25,18 +26,21 @@ public class PublicController {
 
     private final EventService eventService;
     private final CompilationService compilationService;
+    private final CategoryService categoryService;
 
     @Autowired
-    public PublicController(EventService eventService, CompilationService compilationService) {
+    public PublicController(EventService eventService, CompilationService compilationService,
+                            CategoryService categoryService) {
         this.eventService = eventService;
         this.compilationService = compilationService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping("/categories")
     public List<CategoryDto> getCategories(@RequestParam(required = false, defaultValue = "0") Integer from,
                                            @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("GET. Получить список категорий");
-        return eventService.getCategories(from, size);
+        return categoryService.getCategories(from, size);
     }
 
     @GetMapping("/categories/{catId}")
@@ -72,7 +76,7 @@ public class PublicController {
                                                     HttpServletRequest request) throws ValidationException {
         log.info("GET. Получить список событий по заданным параметрам");
         return eventService.getEventsWithFilters(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size, request.getRequestURI(),  request.getRemoteAddr());
+                onlyAvailable, sort, from, size, request.getRequestURI(), request.getRemoteAddr());
     }
 
     @GetMapping("/events/{id}")
