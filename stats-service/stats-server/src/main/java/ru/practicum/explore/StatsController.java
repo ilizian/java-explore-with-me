@@ -28,7 +28,8 @@ public class StatsController {
     public List<ViewStatsDto> getStats(@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(value = "start") LocalDateTime start,
                                        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(value = "end") LocalDateTime end,
                                        @RequestParam(required = false) List<String> uris,
-                                       @RequestParam(required = false, defaultValue = "false") Boolean unique) {
+                                       @RequestParam(required = false, defaultValue = "false") Boolean unique)
+            throws ValidationException {
         log.info("GET. Получить статистику");
         return statsService.getStats(start, end, uris, unique);
     }

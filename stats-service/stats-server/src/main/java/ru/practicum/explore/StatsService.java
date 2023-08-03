@@ -8,5 +8,5 @@ import java.util.List;
 public interface StatsService {
     EndpointHitDto saveHit(EndpointHitDto endpointHitDto) throws ValidationException;
 
-    List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique);
+    List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) throws ValidationException;
 }

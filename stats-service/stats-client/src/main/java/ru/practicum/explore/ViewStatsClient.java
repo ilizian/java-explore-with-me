@@ -1,34 +1,38 @@
 package ru.practicum.explore;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.util.List;
 
 @Service
-public class ViewStatsClient extends BaseClient {
+public class ViewStatsClient {
+    private static final String URL = "http://stats-server:9090";
+    private final WebClient webClient = WebClient.create(URL);
 
-    @Autowired
-    public ViewStatsClient(RestTemplate restTemplate) {
-        super(restTemplate);
+    public List<ViewStatsDto> getStats(String start, String end, List<String> uris, Boolean unique) {
+        return List.of(webClient.get()
+                .uri(uriWithParams -> uriWithParams.path("/stats")
+                        .queryParam("start", start)
+                        .queryParam("end", end)
+                        .queryParam("uris", uris)
+                        .queryParam("unique", unique)
+                        .build())
+                .retrieve()
+                .bodyToMono(ViewStatsDto[].class)
+                .block());
     }
 
-    public ResponseEntity<Object> getStatsSpecified(String start, String end, String[] uris, Boolean unique) {
-        Map<String, Object> params = Map.of(
-                "start", start,
-                "end", end,
-                "uris", String.join(",",uris),
-                "unique", unique);
-        return get("?start={start}&end={end}&uris={uris}&unique={unique}", params);
-    }
-
-    public ResponseEntity<Object> getStats(String start, String end, Boolean unique) {
-        Map<String, Object> params = Map.of(
-                "start", start,
-                "end", end,
-                "unique", unique);
-        return get("?start={start}&end={end}&unique={unique}", params);
+    public EndpointHitDto addHit(EndpointHitDto endpointHitDto) {
+        return webClient.post()
+                .uri("/hit")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(Mono.just(endpointHitDto), EndpointHitDto.class)
+                .retrieve()
+                .bodyToMono(EndpointHitDto.class)
+                .block();
     }
 }

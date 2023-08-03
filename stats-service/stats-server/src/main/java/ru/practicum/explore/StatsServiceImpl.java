@@ -29,8 +29,15 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique)
+            throws ValidationException {
         List<ViewStats> stats;
+        if (start == null || end == null) {
+            throw new ValidationException("Ошибка. Неправильный диапазон дат");
+        }
+        if (start.isAfter(end)) {
+            throw new ValidationException("Ошибка. Дата начала диапазона не может быть больше даты окончания");
+        }
         if (unique) {
             stats = statsRepository.findUniqueStats(start, end, uris);
         } else {
