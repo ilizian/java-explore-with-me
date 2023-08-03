@@ -109,7 +109,7 @@ public class RequestServiceImpl implements RequestService {
         if (!user.getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Ошибка. Пользователь не является инициатором события с id " + eventId);
         }
-        return requestRepository.findAllByEventInitiatorId(userId);
+        return requestRepository.findAllByEventInitiatorIdAndEventId(userId, eventId);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class RequestServiceImpl implements RequestService {
         return false;
     }
 
-    public void addRequest(EventRequestStatusUpdateResult eventRequestStatusUpdateResult, ParticipationRequest request) {
+    private void addRequest(EventRequestStatusUpdateResult eventRequestStatusUpdateResult, ParticipationRequest request) {
         List<ParticipationRequestDto> resultConfirmed = eventRequestStatusUpdateResult.getConfirmedRequests();
         List<ParticipationRequestDto> resultRejected = eventRequestStatusUpdateResult.getRejectedRequests();
         String created = request.getCreated().toString();
