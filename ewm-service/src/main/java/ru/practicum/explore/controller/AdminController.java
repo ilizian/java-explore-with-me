@@ -3,10 +3,7 @@ package ru.practicum.explore.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.practicum.explore.exception.ValidationException;
-import ru.practicum.explore.service.CategoryService;
-import ru.practicum.explore.service.CompilationService;
-import ru.practicum.explore.service.EventService;
-import ru.practicum.explore.service.UserService;
+import ru.practicum.explore.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore.dto.*;
@@ -22,16 +19,19 @@ public class AdminController {
     private final UserService userService;
     private final CategoryService categoryService;
     private final CompilationService compilationService;
+    private final CommentService commentService;
 
     @Autowired
     public AdminController(UserService userService,
                            EventService eventService,
                            CompilationService compilationService,
-                           CategoryService categoryService) {
+                           CategoryService categoryService,
+                           CommentService commentService) {
         this.userService = userService;
         this.eventService = eventService;
         this.compilationService = compilationService;
         this.categoryService = categoryService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/users")
@@ -115,5 +115,12 @@ public class AdminController {
                                     @RequestBody @Valid UpdateEventAdminRequest updateEventAdminRequest) throws ValidationException {
         log.info("PATCH. Изменить событие по id " + eventId);
         return eventService.updateEvent(eventId, updateEventAdminRequest);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable Long commentId) {
+        log.info("DELETE. Удаление комментария по id " + commentId);
+        commentService.deleteComment(commentId);
     }
 }
