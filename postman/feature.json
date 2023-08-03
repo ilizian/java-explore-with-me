@@ -263,7 +263,7 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "99"
+									"value": "99999"
 								}
 							]
 						}
@@ -318,7 +318,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/comments?eventId=99",
+							"raw": "{{baseUrl}}/users/:userId/comments?eventId=99999",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -330,7 +330,7 @@
 							"query": [
 								{
 									"key": "eventId",
-									"value": "99"
+									"value": "99999"
 								}
 							],
 							"variable": [
@@ -781,7 +781,7 @@
 							"variable": [
 								{
 									"key": "commentId",
-									"value": "2"
+									"value": "1"
 								}
 							]
 						}
