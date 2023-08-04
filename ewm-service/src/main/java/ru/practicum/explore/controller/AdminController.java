@@ -120,7 +120,14 @@ public class AdminController {
     @DeleteMapping("/comments/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable Long commentId) {
-        log.info("DELETE. Удаление комментария по id " + commentId);
+        log.info("DELETE. Админ. Удаление комментария по id " + commentId);
         commentService.deleteComment(commentId);
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public CommentDto updateComment(@PathVariable Long commentId,
+                                    @RequestBody @Valid CommentDto updateCommentDto) {
+        log.info("PATCH. Админ. Изменить комментарий с id " + commentId);
+        return commentService.updateCommentAdmin(commentId, updateCommentDto);
     }
 }

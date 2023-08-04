@@ -18,6 +18,7 @@ import ru.practicum.explore.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,10 +32,7 @@ public class CommentServiceImpl implements CommentService {
 
 
     @Override
-    public CommentDto addNewComment(Long userId, Long eventId, CommentDto newCommentDto) throws ValidationException {
-        if (newCommentDto.getMessage() == null || newCommentDto.getMessage().isBlank()) {
-            throw new ValidationException("Ошибка. Отсутствует текст комментария");
-        }
+    public CommentDto addNewComment(Long userId, Long eventId, CommentDto newCommentDto) {
         Comment comment = commentRepository.save(getCommentFromDto(userId, eventId, newCommentDto));
         return commentDtoMapper.mapCommentToDto(comment);
     }
@@ -56,12 +54,26 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto updateComment(Long userId, Long commentId, CommentDto updateCommentDto) {
+    public CommentDto updateComment(Long userId, Long commentId, CommentDto updateCommentDto) throws ValidationException {
         Comment newComment = getCommentFromDto(userId, commentId, updateCommentDto);
         Comment comment = commentRepository.findById(commentId).orElseThrow(
                 () -> new NotFoundException("Ошибка. Не найден комментарий по id " + commentId)
         );
+        if (!Objects.equals(userId, comment.getAuthor().getId())) {
+            throw new ValidationException("Ошибка. Пользователь с id " + userId + " не является автором комментария с id " + commentId);
+        }
         comment.setMessage(newComment.getMessage());
+        comment.setUpdated(LocalDateTime.now());
+        commentRepository.save(comment);
+        return commentDtoMapper.mapCommentToDto(comment);
+    }
+
+    @Override
+    public CommentDto updateCommentAdmin(Long commentId, CommentDto updateCommentDto) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(
+                () -> new NotFoundException("Ошибка. Не найден комментарий по id " + commentId)
+        );
+        comment.setMessage(updateCommentDto.getMessage());
         comment.setUpdated(LocalDateTime.now());
         commentRepository.save(comment);
         return commentDtoMapper.mapCommentToDto(comment);
@@ -77,7 +89,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentDto> getCommentsByText(Long eventId, String text, Integer from, Integer size) {
-        return commentRepository.findAllByEventIdAndText(eventId, text.toLowerCase(), PageRequest.of(from / size, size));
+        List<Comment> comments = commentRepository.findAllByEventIdAndMessageContainsIgnoreCase(eventId, text.toLowerCase(),
+                PageRequest.of(from / size, size));
+        return comments.stream()
+                .map(commentDtoMapper::mapCommentToDto)
+                .collect(Collectors.toList());
     }
 
     @Override

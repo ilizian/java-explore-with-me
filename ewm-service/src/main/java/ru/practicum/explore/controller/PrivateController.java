@@ -109,7 +109,7 @@ public class PrivateController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto addNewComment(@PathVariable Long userId,
                                     @RequestParam Long eventId,
-                                    @RequestBody @Valid CommentDto newCommentDto) throws ValidationException {
+                                    @RequestBody @Valid CommentDto newCommentDto) {
         log.info("POST. Создать комментарий к событию id " + eventId);
         return commentService.addNewComment(userId, eventId, newCommentDto);
     }
@@ -117,7 +117,7 @@ public class PrivateController {
     @PatchMapping("comments/{commentId}")
     public CommentDto updateComment(@PathVariable Long userId,
                                     @PathVariable Long commentId,
-                                    @RequestBody @Valid CommentDto updateCommentDto) {
+                                    @RequestBody @Valid CommentDto updateCommentDto) throws ValidationException {
         log.info("PATCH. Изменить комментарий с id " + commentId);
         return commentService.updateComment(userId, commentId, updateCommentDto);
     }
