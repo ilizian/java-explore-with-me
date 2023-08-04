@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.practicum.explore.exception.ValidationException;
+import ru.practicum.explore.service.CommentService;
 import ru.practicum.explore.service.EventService;
 import ru.practicum.explore.dto.*;
 import ru.practicum.explore.service.RequestService;
@@ -19,11 +20,13 @@ import java.util.List;
 public class PrivateController {
     private final EventService eventService;
     private final RequestService requestService;
+    private final CommentService commentService;
 
     @Autowired
-    public PrivateController(EventService eventService, RequestService requestService) {
+    public PrivateController(EventService eventService, RequestService requestService, CommentService commentService) {
         this.eventService = eventService;
         this.requestService = requestService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/requests")
@@ -92,5 +95,30 @@ public class PrivateController {
                                                               @PathVariable Long requestId) {
         log.info("PATCH. Отменить запрос на участие  пользователем c id " + userId);
         return requestService.cancelParticipationRequest(userId, requestId);
+    }
+
+    @GetMapping("/comments")
+    public List<CommentDto> getCommentsByUser(@PathVariable Long userId,
+                                              @RequestParam(defaultValue = "0") Integer from,
+                                              @RequestParam(defaultValue = "10") Integer size) {
+        log.info("GET. Получить список комментариев пользователя с id " + userId);
+        return commentService.getCommentsOfUser(userId, from, size);
+    }
+
+    @PostMapping("/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentDto addNewComment(@PathVariable Long userId,
+                                    @RequestParam Long eventId,
+                                    @RequestBody @Valid CommentDto newCommentDto) {
+        log.info("POST. Создать комментарий к событию id " + eventId);
+        return commentService.addNewComment(userId, eventId, newCommentDto);
+    }
+
+    @PatchMapping("comments/{commentId}")
+    public CommentDto updateComment(@PathVariable Long userId,
+                                    @PathVariable Long commentId,
+                                    @RequestBody @Valid CommentDto updateCommentDto) throws ValidationException {
+        log.info("PATCH. Изменить комментарий с id " + commentId);
+        return commentService.updateComment(userId, commentId, updateCommentDto);
     }
 }

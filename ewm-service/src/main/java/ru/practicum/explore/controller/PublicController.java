@@ -6,12 +6,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import ru.practicum.explore.dto.CategoryDto;
-import ru.practicum.explore.dto.CompilationDto;
-import ru.practicum.explore.dto.EventFullDto;
-import ru.practicum.explore.dto.EventShortDto;
+import ru.practicum.explore.dto.*;
 import ru.practicum.explore.exception.ValidationException;
 import ru.practicum.explore.service.CategoryService;
+import ru.practicum.explore.service.CommentService;
 import ru.practicum.explore.service.CompilationService;
 import ru.practicum.explore.service.EventService;
 
@@ -27,13 +25,15 @@ public class PublicController {
     private final EventService eventService;
     private final CompilationService compilationService;
     private final CategoryService categoryService;
+    private final CommentService commentService;
 
     @Autowired
     public PublicController(EventService eventService, CompilationService compilationService,
-                            CategoryService categoryService) {
+                            CategoryService categoryService, CommentService commentService) {
         this.eventService = eventService;
         this.compilationService = compilationService;
         this.categoryService = categoryService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/categories")
@@ -83,5 +83,23 @@ public class PublicController {
     public EventFullDto getEventById(@PathVariable Long id, HttpServletRequest request) {
         log.info("GET. Получить событие по id " + id);
         return eventService.getEventDtoById(id, request);
+    }
+
+    @GetMapping("/comments/{commentId}")
+    public CommentDto getCommentById(@PathVariable Long commentId) {
+        log.info("GET. Получить комментарий по id " + commentId);
+        return commentService.getCommentById(commentId);
+    }
+
+    @GetMapping("/events/{eventId}/comments")
+    public List<CommentDto> getCommentsByText(@PathVariable Long eventId,
+                                               @RequestParam(required = false) String message,
+                                               @RequestParam(defaultValue = "0") Integer from,
+                                               @RequestParam(defaultValue = "10") Integer size) {
+        log.info("GET. Получить комментарии к событию по id " + eventId);
+        if (message == null) {
+            return commentService.getCommentsOfEvent(eventId, from, size);
+        }
+        return commentService.getCommentsByText(eventId, message, from, size);
     }
 }
